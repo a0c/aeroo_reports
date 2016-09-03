@@ -642,6 +642,9 @@ class Aeroo_report(report_sxw):
         pdf = create_doc(etree.tostring(processed_rml),oo_parser.localcontext,logo,title.encode('utf8'))
         return (pdf, report_xml.report_type)
 
+    def extract_extension(self, aname):
+        return aname and next((_ext[1:] for _ext in ('.pdf', '.xls', '.odt', '.ods') if aname.endswith(_ext)), False)
+
     def create_source_pdf(self, cr, uid, ids, data, report_xml, context=None):
         if not context:
             context={}
@@ -660,6 +663,7 @@ class Aeroo_report(report_sxw):
                 if deferred:
                     deferred.progress_update()
                 aname = attach and eval(attach, {'object':obj, 'time':time}) or False
+                ext = self.extract_extension(aname)
                 result = False
                 if report_xml.attachment_use and aname and context.get('attachment_use', True):
                     #aids = pool.get('ir.attachment').search(cr, uid, [('datas_fname','=',aname+'.pdf'),('res_model','=',self.table),('res_id','=',obj.id)])
@@ -670,14 +674,15 @@ class Aeroo_report(report_sxw):
                     #    d = base64.decodestring(brow_rec.datas)
                     #    results.append((d,'pdf'))
                     #    continue
-                    cr.execute("SELECT id, datas_fname FROM ir_attachment WHERE datas_fname ilike %s and res_model=%s and res_id=%s LIMIT 1", (aname+'.%',self.table,obj.id))
+                    cr.execute("SELECT id, datas_fname FROM ir_attachment WHERE datas_fname ilike %s and res_model=%s and res_id=%s LIMIT 1",
+                               (ext and aname or aname+'.%',self.table,obj.id))
                     search_res = cr.dictfetchone()
                     if search_res:
                         brow_rec = pool.get('ir.attachment').browse(cr, uid, search_res['id'])
                         if not brow_rec.datas:
                             continue
                         d = base64.decodestring(brow_rec.datas)
-                        extension = search_res['datas_fname'].split('.')[1]
+                        extension = ext or search_res['datas_fname'].split('.')[1]
                         results.append((d,extension))
                         continue
                 result = self.create_single_pdf(cr, uid, [obj.id], data, report_xml, context)
@@ -685,7 +690,7 @@ class Aeroo_report(report_sxw):
                     return False
                 try:
                     if attach and aname:
-                        name = aname+'.'+result[1]
+                        name = ext and aname or aname+'.'+result[1]
                         datas = base64.encodestring(result[0])
                         ctx = dict(context)
                         ctx.pop('default_type', None)
@@ -740,22 +745,24 @@ class Aeroo_report(report_sxw):
                 if deferred:
                     deferred.progress_update()
                 aname = attach and eval(attach, {'object':obj, 'time':time}) or False
+                ext = self.extract_extension(aname)
                 result = False
                 if report_xml.attachment_use and aname and context.get('attachment_use', True):
-                    cr.execute("SELECT id, datas_fname FROM ir_attachment WHERE datas_fname ilike %s and res_model=%s and res_id=%s LIMIT 1", (aname+'.%',self.table,obj.id))
+                    cr.execute("SELECT id, datas_fname FROM ir_attachment WHERE datas_fname ilike %s and res_model=%s and res_id=%s LIMIT 1",
+                               (ext and aname or aname+'.%',self.table,obj.id))
                     search_res = cr.dictfetchone()
                     if search_res:
                         brow_rec = pool.get('ir.attachment').browse(cr, uid, search_res['id'])
                         if not brow_rec.datas:
                             continue
                         d = base64.decodestring(brow_rec.datas)
-                        extension = search_res['datas_fname'].split('.')[1]
+                        extension = ext or search_res['datas_fname'].split('.')[1]
                         results.append((d,extension))
                         continue
                 result = self.create_single_pdf(cr, uid, [obj.id], data, report_xml, context)
                 try:
                     if attach and aname:
-                        name = aname+'.'+result[1]
+                        name = ext and aname or aname+'.'+result[1]
                         datas = base64.encodestring(result[0])
                         ctx = dict(context)
                         ctx.pop('default_type', None)
