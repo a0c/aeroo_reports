@@ -664,6 +664,9 @@ class Aeroo_report(report_sxw):
                     deferred.progress_update()
                 aname = attach and eval(attach, {'object':obj, 'time':time}) or False
                 ext = self.extract_extension(aname)
+                if ext and 'aeroo_cache' in context and aname in context['aeroo_cache']:
+                    results.append(context['aeroo_cache'][aname])
+                    continue
                 result = False
                 if report_xml.attachment_use and aname and context.get('attachment_use', True):
                     #aids = pool.get('ir.attachment').search(cr, uid, [('datas_fname','=',aname+'.pdf'),('res_model','=',self.table),('res_id','=',obj.id)])
@@ -688,8 +691,10 @@ class Aeroo_report(report_sxw):
                 result = self.create_single_pdf(cr, uid, [obj.id], data, report_xml, context)
                 if not result:
                     return False
+                if ext and 'aeroo_cache' in context:
+                    context['aeroo_cache'][aname] = result
                 try:
-                    if attach and aname:
+                    if attach and aname and context.get('aeroo_attach', True):
                         name = ext and aname or aname+'.'+result[1]
                         datas = base64.encodestring(result[0])
                         ctx = dict(context)
@@ -746,6 +751,9 @@ class Aeroo_report(report_sxw):
                     deferred.progress_update()
                 aname = attach and eval(attach, {'object':obj, 'time':time}) or False
                 ext = self.extract_extension(aname)
+                if ext and 'aeroo_cache' in context and aname in context['aeroo_cache']:
+                    results.append(context['aeroo_cache'][aname])
+                    continue
                 result = False
                 if report_xml.attachment_use and aname and context.get('attachment_use', True):
                     cr.execute("SELECT id, datas_fname FROM ir_attachment WHERE datas_fname ilike %s and res_model=%s and res_id=%s LIMIT 1",
@@ -760,8 +768,10 @@ class Aeroo_report(report_sxw):
                         results.append((d,extension))
                         continue
                 result = self.create_single_pdf(cr, uid, [obj.id], data, report_xml, context)
+                if ext and 'aeroo_cache' in context:
+                    context['aeroo_cache'][aname] = result
                 try:
-                    if attach and aname:
+                    if attach and aname and context.get('aeroo_attach', True):
                         name = ext and aname or aname+'.'+result[1]
                         datas = base64.encodestring(result[0])
                         ctx = dict(context)
