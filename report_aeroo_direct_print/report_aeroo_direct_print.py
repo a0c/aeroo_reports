@@ -33,6 +33,7 @@ from openerp import api, models, fields, _
 
 from openerp.report import interface
 import cups
+import os
 from tempfile import NamedTemporaryFile
 import md5
 
@@ -52,8 +53,14 @@ class report_print_actions(models.TransientModel):
         if res[1] in SUPPORTED_PRINT_FORMAT:
             with NamedTemporaryFile(suffix='', prefix='aeroo-print-', delete=False) as temp_file:
                 temp_file.write(res[0])
+            temp_file_name = temp_file.name
+            if report_xml.rotation and res[1] == 'pdf':
+                rotate_file = '%s_rotate' % temp_file_name
+                cmd = 'pdftk %s cat 1-end%s output %s' % (temp_file_name, report_xml.rotation, rotate_file)
+                os.system(cmd)
+                temp_file_name = rotate_file
             conn = cups.Connection()
-            return conn.printFile(printer, temp_file.name, 'Aeroo Print', {'copies': report_xml.copies > 0 and str(report_xml.copies) or '1'})
+            return conn.printFile(printer, temp_file_name, 'Aeroo Print', {'copies': report_xml.copies > 0 and str(report_xml.copies) or '1'})
         else:
             raise osv.except_osv(_('Warning!'), _('Unsupported report format "%s". Is not possible direct print to printer.') % res[1])
         return False
@@ -202,6 +209,7 @@ class report_xml(models.Model):
     
     printer_id = fields.Many2one('aeroo.printers', string='Printer',
         help='Printer for direct print, or printer selected by default, if "Report Wizard" field is checked.')
+    rotation = fields.Selection([('left', 'Left'), ('right', 'Right'), ('down', 'Down')])
         
     ### ends Fields
 

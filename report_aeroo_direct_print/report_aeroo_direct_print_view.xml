@@ -136,6 +136,7 @@
             <field name="arch" type="xml">
                 <field name="content_fname" position="after">
                     <field name="printer_id" context="{'view_all':True}" widget="selection"/>
+                    <field name="rotation"/>
                 </field>
             </field>
         </record>
