@@ -60,7 +60,8 @@ class report_print_actions(models.TransientModel):
                 os.system(cmd)
                 temp_file_name = rotate_file
             conn = cups.Connection()
-            return conn.printFile(printer, temp_file_name, 'Aeroo Print', {'copies': report_xml.copies > 0 and str(report_xml.copies) or '1'})
+            title = 'Aeroo Print %s %s' % (report_xml.model.replace('.', '_'), '_'.join(map(str, context['active_ids'])))
+            return conn.printFile(printer, temp_file_name, title, {'copies': report_xml.copies > 0 and str(report_xml.copies) or '1'})
         else:
             raise osv.except_osv(_('Warning!'), _('Unsupported report format "%s". Is not possible direct print to printer.') % res[1])
         return False
