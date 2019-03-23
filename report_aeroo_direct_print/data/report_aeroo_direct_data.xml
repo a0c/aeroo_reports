@@ -12,6 +12,17 @@
 		    <field name="code">user-def-label-printer</field>
 	    </record>
 
+			<!-- Sequence for printed PDFs -->
+			<record id="seq_type_printed_pdfs" model="ir.sequence.type">
+				<field name="name">Printed PDFs</field>
+				<field name="code">printed.pdfs</field>
+			</record>
+			<record id="seq_printed_pdfs" model="ir.sequence">
+				<field name="name">Printed PDFs</field>
+				<field name="code">printed.pdfs</field>
+				<field name="company_id" eval="False"/>
+			</record>
+
     </data>
 </openerp>
 
