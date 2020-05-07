@@ -54,10 +54,11 @@ class report_print_actions(models.TransientModel):
                 temp_file.write(res[0])
             conn = cups.Connection()
             title = 'Aeroo Print'
+            copies = context.get('copies_qty') or report_xml.copies > 0 and str(report_xml.copies) or '1'
             if printer == 'PDF':
                 seq = self.pool['ir.sequence'].next_by_code(cr, uid, 'printed.pdfs', context=context)
                 title = 'PDF %s %s' % (seq, uid)
-            return conn.printFile(printer, temp_file.name, title, {'copies': report_xml.copies > 0 and str(report_xml.copies) or '1'})
+            return conn.printFile(printer, temp_file.name, title, {'copies': copies})
         else:
             raise osv.except_osv(_('Warning!'), _('Unsupported report format "%s". Is not possible direct print to printer.') % res[1])
         return False
