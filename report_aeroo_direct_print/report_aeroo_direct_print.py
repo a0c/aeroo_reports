@@ -116,7 +116,12 @@ class report_print_actions(models.TransientModel):
         if report_xml and report_xml.printer_id:
             try:
                 if report_xml.printer_id.code in SPECIAL_PRINTERS:
-                    printer_id = context.get("def_%s_%s" % tuple(report_xml.printer_id.code.split('-')[-2:]), False)
+                    # FIX: use fresh user context to get user's default printers. provided context sometimes contains
+                    # outdated default printers: e.g. after changing user's default printer, auto-printing on
+                    # move.action_done() or manually printing from Incoming Products uses previously set user printer,
+                    # so a page reload was required previously in such cases (sometimes even browser cache clearing)
+                    ctx = self.pool.get('res.users').context_get(cr, uid, context)
+                    printer_id = ctx.get("def_%s_%s" % tuple(report_xml.printer_id.code.split('-')[-2:]), False)
                     if printer_id:
                         return self.pool.get('aeroo.printers').browse(cr, uid, printer_id, context=context).code
                 else:
