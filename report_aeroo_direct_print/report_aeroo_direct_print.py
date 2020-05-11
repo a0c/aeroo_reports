@@ -35,6 +35,10 @@ from openerp.report import interface
 import cups
 from tempfile import NamedTemporaryFile
 import md5
+import os
+
+import logging
+_logger = logging.getLogger('report_aeroo')
 
 SUPPORTED_PRINT_FORMAT = ('pdf','raw')
 SPECIAL_PRINTERS = ('user-def-gen-purpose-printer','user-def-label-printer')
@@ -53,8 +57,10 @@ class report_print_actions(models.TransientModel):
             with NamedTemporaryFile(suffix='', prefix='aeroo-print-', delete=False) as temp_file:
                 temp_file.write(res[0])
             conn = cups.Connection()
-            title = 'Aeroo Print'
+            title = temp_file.name.split(os.sep)[-1]
             copies = context.get('copies_qty') or report_xml.copies > 0 and str(report_xml.copies) or '1'
+            # if issue with printer again: https://www.cups.org/doc/network.html
+            _logger.info('Printer: %s, File: %s, Title: %s, Copies: %s' % (printer, temp_file.name, title, copies))
             if printer == 'PDF':
                 seq = self.pool['ir.sequence'].next_by_code(cr, uid, 'printed.pdfs', context=context)
                 title = 'PDF %s %s' % (seq, uid)
